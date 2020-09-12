@@ -16,7 +16,7 @@ endif()
 
 include_directories(
         include
-        include/pylon/GenICam
+        /opt/pylon/include
         ${OpenCV_INCLUDE_DIRS})
 
 set(${PROJECT_NAME}_PUBLIC_INCLUDES include/basler_camera/BaslerCamera.hpp)
@@ -27,7 +27,7 @@ add_library(${PROJECT_NAME}
         src/TimeMeasuring.hpp)
 
 target_link_libraries(${PROJECT_NAME}
-        "-framework pylon"
+        -Wl,--enable-new-dtags -Wl,-rpath,/opt/pylon/lib -L/opt/pylon/lib -Wl,-E -lpylonbase -lpylonutility -lGenApi_gcc_v3_1_Basler_pylon -lGCBase_gcc_v3_1_Basler_pylon
         ${OpenCV_LIBS})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${${PROJECT_NAME}_PUBLIC_INCLUDES}")

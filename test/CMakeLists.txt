@@ -11,8 +11,7 @@ endif()
 target_link_libraries(test_${PROJECT_NAME}
         ${PROJECT_NAME}
         ${OpenCV_LIBS}
-        ${STD_FILESYSTEM}
-        "-framework pylon")
+        ${STD_FILESYSTEM})
 
 install(TARGETS test_${PROJECT_NAME}
         RUNTIME DESTINATION ${LIBRARY_INSTALL_DESTINATION}/bin)
