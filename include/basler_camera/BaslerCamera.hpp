@@ -40,6 +40,5 @@ public:
   auto GetAvailableCameras() -> std::vector<DataStream>&;
 
 private:
-  class Impl;
   std::unique_ptr<Impl> _pImpl;
 };
