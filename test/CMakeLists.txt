@@ -1,4 +1,6 @@
-include_directories(include)
+include_directories(
+        src
+        include)
 
 add_executable(test_${PROJECT_NAME}
         basler_camera.cpp)
