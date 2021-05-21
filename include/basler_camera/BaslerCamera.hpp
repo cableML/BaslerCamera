@@ -24,7 +24,10 @@ public:
       void StartCamera();
       void StopCamera();
       bool GetFrame(cv::Mat& frame);
-      void SetExposureTime();
+      auto GetVendor() -> std::string { return "Balser"; }
+      auto GetSerialNumber() -> std::string { static auto fakeNumber = 123456; return std::to_string(fakeNumber); }
+      void SetExposureTime(uint64_t exposure);
+      void SetGain(uint32_t gain);
 
    private:
       std::unique_ptr<Impl> _pImpl;

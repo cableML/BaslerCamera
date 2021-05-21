@@ -43,7 +43,7 @@ public:
          std::cout << "SizeY: " << ptrGrabResult->GetHeight() << std::endl;
          const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
          auto pixelType = ptrGrabResult->GetPixelType();
-         std::cout << pixelType << std::endl;
+         std::cout << "pixelType: " << pixelType << std::endl;
          std::cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << std::endl;
          frame = cv::Mat((int)ptrGrabResult->GetHeight(), (int)ptrGrabResult->GetWidth(), CV_8UC3, (void*)pImageBuffer);
       }
@@ -53,9 +53,14 @@ public:
       }
    }
 
-   void SetExposureTime()
+   void SetExposureTime(uint64_t exposureTime)
    {
       // _instantCamera.GetN
+   }
+
+   void SetGain(uint32_t gain)
+   {
+
    }
 
    ~Impl()
@@ -192,9 +197,14 @@ bool BaslerCamera::DataStream::GetFrame(cv::Mat& frame)
    return _pImpl->GetFrame(frame);
 }
 
-void BaslerCamera::DataStream::SetExposureTime()
+void BaslerCamera::DataStream::SetExposureTime(uint64_t exposureTime)
 {
-   _pImpl->SetExposureTime();
+   _pImpl->SetExposureTime(exposureTime);
+}
+
+void BaslerCamera::DataStream::SetGain(uint32_t gain)
+{
+   _pImpl->SetGain(gain);
 }
 
 #if 0

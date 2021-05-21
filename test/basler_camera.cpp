@@ -18,7 +18,13 @@ auto main(int argc, char** argv) -> int32_t
     auto exposition = std::stod(argv[1]);
     auto gain = std::stod(argv[2]);
     auto delay = std::stoi(argv[3]);
+    std::string outDirectory = argv[4];
 
+    if (outDirectory.empty())
+    {
+        std::cout << "Should be set folder for output" << std::endl;
+        return 0;
+    }
     BaslerCamera baslerCamera{};
     auto& availableCameras = baslerCamera.GetAvailableCameras();
 
@@ -31,9 +37,9 @@ auto main(int argc, char** argv) -> int32_t
 //           continue;
 //       }
        availableCamera.StartCamera();
-       //availableCamera.SetExposureTime(exposition);
-       //availableCamera.SetGain(gain);
-       fs::create_directories("/media/user/Data/basler_out/" + std::to_string(i++));
+       availableCamera.SetExposureTime(exposition);
+       availableCamera.SetGain(gain);
+       fs::create_directories(outDirectory + "/" + std::to_string(i++));
     }
     auto frameNumber = 0;
     while(true)
@@ -50,7 +56,7 @@ auto main(int argc, char** argv) -> int32_t
             availableCamera.GetFrame(frame);
             cv::imshow(std::string("Camera #") + std::to_string(index++), frame);
             auto frameNumberStr = std::to_string(frameNumber);
-            cv::imwrite("/media/user/Data/basler_out/" + std::to_string(i++) + "/" + std::string(8 - frameNumberStr.length(), '0') + frameNumberStr + ".png", frame);
+            cv::imwrite(outDirectory + "/" + std::to_string(i++) + "/" + std::string(8 - frameNumberStr.length(), '0') + frameNumberStr + ".png", frame);
         }
         frameNumber++;
         if (cv::waitKey(delay) == 27)
