@@ -1,9 +1,9 @@
 #include <basler_camera/BaslerCamera.hpp>
 
-#include <pylon/PylonIncludes.h>
-
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
+
+#include <pylon/PylonIncludes.h>
 
 #include <iostream>
 
@@ -51,6 +51,7 @@ public:
       {
          std::cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << std::endl;
       }
+      return true;
    }
 
    void SetExposureTime(uint64_t exposureTime)

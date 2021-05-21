@@ -14,10 +14,16 @@ else()
    find_package(OpenCV REQUIRED PATHS ${CUSTOM_OPENCV_BUILD_PATH} NO_DEFAULT_PATH)
 endif()
 
+if (MSVC)
+   set(PYLON_INCLUDE_DIRECTORIES "C:/Program Files/Basler/pylon 6/Development/include")
+else()
+   set(PYLON_INCLUDE_DIRECTORIES  /opt/pylon/include)
+endif()
+
 include_directories(
-        include
-        /opt/pylon/include
-        ${OpenCV_INCLUDE_DIRS})
+    include
+    ${PYLON_INCLUDE_DIRECTORIES}
+    ${OpenCV_INCLUDE_DIRS})
 
 set(${PROJECT_NAME}_PUBLIC_INCLUDES include/basler_camera/BaslerCamera.hpp)
 
@@ -26,8 +32,17 @@ add_library(${PROJECT_NAME}
         src/BaslerCamera.cpp
         src/TimeMeasuring.hpp)
 
+if(MSVC)
+   set(PYLON_LIBRARIES "C:/Program Files/Basler/pylon 6/Development/lib/x64/PylonUtility_v6_1.lib"
+           "C:/Program Files/Basler/pylon 6/Development/lib/x64/PylonBase_v6_1.lib"
+           "C:/Program Files/Basler/pylon 6/Development/lib/x64/GenApi_MD_VC141_v3_1_Basler_pylon.lib"
+           "C:/Program Files/Basler/pylon 6/Development/lib/x64/GCBase_MD_VC141_v3_1_Basler_pylon.lib")
+else()
+   set(PYLON_LIBRARIES -Wl,--enable-new-dtags -Wl,-rpath,/opt/pylon/lib -L/opt/pylon/lib -Wl,-E -lpylonbase -lpylonutility -lGenApi_gcc_v3_1_Basler_pylon -lGCBase_gcc_v3_1_Basler_pylon)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
-        -Wl,--enable-new-dtags -Wl,-rpath,/opt/pylon/lib -L/opt/pylon/lib -Wl,-E -lpylonbase -lpylonutility -lGenApi_gcc_v3_1_Basler_pylon -lGCBase_gcc_v3_1_Basler_pylon
+        ${PYLON_LIBRARIES}
         ${OpenCV_LIBS})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${${PROJECT_NAME}_PUBLIC_INCLUDES}")
