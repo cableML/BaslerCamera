@@ -33,12 +33,16 @@ auto main(int argc, char** argv) -> int32_t
     auto i = 0;
     for (auto& availableCamera : availableCameras)
     {
-//       if (availableCamera.GetVendor() != "Baumer") {
-//           continue;
-//       }
+       if (availableCamera.GetVendor() != "Basler")
+       {
+           continue;
+       }
        availableCamera.StartCamera();
        availableCamera.SetExposureTime(exposition);
        availableCamera.SetGain(gain);
+       std::cout << "Camera: " << availableCamera.GetVendor()
+                 << " " << availableCamera.GetSerialNumber()
+                 << " " << availableCamera.GetDeviceTemperature() << std::endl;
        fs::create_directories(outDirectory + "/" + std::to_string(i++));
     }
     auto frameNumber = 0;
@@ -49,9 +53,9 @@ auto main(int argc, char** argv) -> int32_t
         i = 0;
         for (auto& availableCamera : availableCameras)
         {
-            //if (availableCamera.GetVendor() != "Basler")
+            if (availableCamera.GetVendor() != "Basler")
             {
-            //    continue;
+                continue;
             }
             availableCamera.GetFrame(frame);
             cv::imshow(std::string("Camera #") + std::to_string(index++), frame);

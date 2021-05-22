@@ -18,6 +18,15 @@ public:
       // The parameter MaxNumBuffer can be used to control the count of buffers
       // allocated for grabbing. The default value of this parameter is 10.
       _instantCamera.MaxNumBuffer = 5;
+      _instantCamera.Open();
+       auto& nodeMap = _instantCamera.GetNodeMap();
+       Pylon::CEnumParameter pixelFormat(nodeMap, "PixelFormat");
+       std::cout << "pixelFormat: " << pixelFormat.GetValue() << std::endl;
+       if (pixelFormat.CanSetValue("RGB8"))
+       {
+           pixelFormat.SetValue("RGB8");
+       }
+       _instantCamera.Close();
    }
 
    void StartCamera()
@@ -56,16 +65,53 @@ public:
 
    void SetExposureTime(uint64_t exposureTime)
    {
-      // _instantCamera.GetN
+      auto& nodemap = _instantCamera.GetNodeMap();
+      Pylon::CFloatParameter exposureTimeParam(nodemap, "ExposureTime");
+      exposureTimeParam.SetValue(exposureTime);
    }
 
    void SetGain(uint32_t gain)
    {
+       try
+       {
+           auto &nodemap = _instantCamera.GetNodeMap();
+           if (_instantCamera.GetSfncVersion() >= Pylon::Sfnc_2_0_0)
+           {
+               Pylon::CFloatParameter gainParam(nodemap, "Gain");
+               gainParam.SetValue(static_cast<double>(gain));
+           }
+           else
+           {
+               Pylon::CIntegerParameter gainRaw(nodemap, "GainRaw");
+               gainRaw.SetValue(gain);
+           }
+       }
+       catch (const Pylon::GenericException &e)
+       {
+           std::cout << "Error: "  << e.GetDescription() << std::endl;
+       }
+   }
 
+   auto GetVendor() -> std::string
+   {
+       return _instantCamera.GetDeviceInfo().GetVendorName().c_str();
+   }
+
+   auto GetSerialNumber() -> std::string
+   {
+       return _instantCamera.GetDeviceInfo().GetSerialNumber().c_str();
+   }
+
+   auto GetDeviceTemperature() -> float
+   {
+       auto& nodemap = _instantCamera.GetNodeMap();
+       Pylon::CFloatParameter deviceTemperatureParam(nodemap, "DeviceTemperature");
+       return deviceTemperatureParam.GetValue();
    }
 
    ~Impl()
    {
+       //_instantCamera.Close();
    }
 
 private:
@@ -206,6 +252,21 @@ void BaslerCamera::DataStream::SetExposureTime(uint64_t exposureTime)
 void BaslerCamera::DataStream::SetGain(uint32_t gain)
 {
    _pImpl->SetGain(gain);
+}
+
+auto BaslerCamera::DataStream::GetVendor() -> std::string
+{
+    return _pImpl->GetVendor();
+}
+
+auto BaslerCamera::DataStream::GetSerialNumber() -> std::string
+{
+    return _pImpl->GetSerialNumber();
+}
+
+auto BaslerCamera::DataStream::GetDeviceTemperature() -> float
+{
+    return _pImpl->GetDeviceTemperature();
 }
 
 #if 0
