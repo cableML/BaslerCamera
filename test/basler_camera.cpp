@@ -25,56 +25,59 @@ auto main(int argc, char** argv) -> int32_t
         std::cout << "Should be set folder for output" << std::endl;
         return 0;
     }
-    BaslerCamera baslerCamera{};
-    auto& availableCameras = baslerCamera.GetAvailableCameras();
-
-    cv::Mat frame;
-
-    auto i = 0;
-    for (auto& availableCamera : availableCameras)
     {
-       if (availableCamera.GetVendor() != "Basler")
-       {
-           continue;
-       }
-       availableCamera.StartCamera();
-       availableCamera.SetExposureTime(exposition);
-       availableCamera.SetGain(gain);
-       std::cout << "Camera: " << availableCamera.GetVendor()
-                 << " " << availableCamera.GetSerialNumber()
-                 << " " << availableCamera.GetDeviceTemperature() << std::endl;
-       fs::create_directories(outDirectory + "/" + std::to_string(i++));
-    }
-    auto frameNumber = 0;
-    while(true)
-    {
-        TAKEN_TIME();
-        auto index = 0;
-        i = 0;
+        basler::BaslerCamera baslerCamera{};
+        auto& availableCameras = baslerCamera.GetAvailableCameras();
+
+        cv::Mat frame;
+
+        auto i = 0;
+        for (auto& availableCamera : availableCameras)
+        {
+           if (availableCamera.GetVendor() != "Basler")
+           {
+               continue;
+           }
+           availableCamera.StartCamera();
+           availableCamera.SetExposureTime(exposition);
+           availableCamera.SetGain(gain);
+           std::cout << "Camera: " << availableCamera.GetVendor()
+                     << " " << availableCamera.GetSerialNumber()
+                     << " " << availableCamera.GetDeviceTemperature() << std::endl;
+           fs::create_directories(outDirectory + "/" + std::to_string(i++));
+        }
+        auto frameNumber = 0;
+        while(true)
+        {
+            TAKEN_TIME();
+            auto index = 0;
+            i = 0;
+            for (auto& availableCamera : availableCameras)
+            {
+                if (availableCamera.GetVendor() != "Basler")
+                {
+                    continue;
+                }
+                availableCamera.GetFrame(frame);
+                cv::imshow(std::string("Camera #") + std::to_string(index++), frame);
+                auto frameNumberStr = std::to_string(frameNumber);
+                cv::imwrite(outDirectory + "/" + std::to_string(i++) + "/" + std::string(8 - frameNumberStr.length(), '0') + frameNumberStr + ".png", frame);
+            }
+            frameNumber++;
+            if (cv::waitKey(delay) == 27)
+            {
+                break;
+            }
+        }
         for (auto& availableCamera : availableCameras)
         {
             if (availableCamera.GetVendor() != "Basler")
             {
                 continue;
             }
-            availableCamera.GetFrame(frame);
-            cv::imshow(std::string("Camera #") + std::to_string(index++), frame);
-            auto frameNumberStr = std::to_string(frameNumber);
-            cv::imwrite(outDirectory + "/" + std::to_string(i++) + "/" + std::string(8 - frameNumberStr.length(), '0') + frameNumberStr + ".png", frame);
-        }
-        frameNumber++;
-        if (cv::waitKey(delay) == 27)
-        {
-            break;
+            //availableCamera.StopCamera();
         }
     }
-    for (auto& availableCamera : availableCameras)
-    {
-        //if (availableCamera.GetVendor() != "Basler")
-        {
-            continue;
-        }
-        availableCamera.StopCamera();
-    }
+    std::cout << "Finish" << std::endl;
     return 0;
 }

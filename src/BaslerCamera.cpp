@@ -7,7 +7,9 @@
 
 #include <iostream>
 
-class BaslerCamera::DataStream::Impl
+using namespace basler;
+
+class DataStream::Impl
 {
 public:
    Impl(Pylon::IPylonDevice* pylonDevice)
@@ -24,9 +26,14 @@ public:
        std::cout << "pixelFormat: " << pixelFormat.GetValue() << std::endl;
        if (pixelFormat.CanSetValue("RGB8"))
        {
-           pixelFormat.SetValue("RGB8");
+           pixelFormat.SetValue("BGR8");
        }
        _instantCamera.Close();
+   }
+
+   ~Impl()
+   {
+       std::cout << "DataStream::Impl::~Impl" << std::endl;
    }
 
    void StartCamera()
@@ -92,6 +99,36 @@ public:
        }
    }
 
+   auto GetGain() -> uint32_t
+   {
+       uint32_t result{};
+       try
+       {
+           auto &nodemap = _instantCamera.GetNodeMap();
+           if (_instantCamera.GetSfncVersion() >= Pylon::Sfnc_2_0_0)
+           {
+               Pylon::CFloatParameter gainParam(nodemap, "Gain");
+               result = gainParam.GetValue();
+           }
+           else
+           {
+               Pylon::CIntegerParameter gainRaw(nodemap, "GainRaw");
+               result = gainRaw.GetValue();
+           }
+       }
+       catch (const Pylon::GenericException &e)
+       {
+           std::cout << "Error: "  << e.GetDescription() << std::endl;
+       }
+   }
+
+   auto GetExposureTime() -> uint64_t
+   {
+       auto& nodemap = _instantCamera.GetNodeMap();
+       Pylon::CFloatParameter exposureTimeParam(nodemap, "ExposureTime");
+       return exposureTimeParam.GetValue();
+   }
+
    auto GetVendor() -> std::string
    {
        return _instantCamera.GetDeviceInfo().GetVendorName().c_str();
@@ -109,11 +146,6 @@ public:
        return deviceTemperatureParam.GetValue();
    }
 
-   ~Impl()
-   {
-       //_instantCamera.Close();
-   }
-
 private:
    Pylon::CInstantCamera _instantCamera;
 };
@@ -128,11 +160,14 @@ public:
 
    ~Impl()
    {
+      std::cout << "BaslerCamera::Impl::~Impl" << std::endl;
+      _dataStreams.clear();
       Pylon::PylonTerminate();
    }
 
    auto GetAvailableCameras() -> std::vector<DataStream>&
    {
+#if 0
       Pylon::TlInfoList_t transportInfoList;
       auto countTransports = Pylon::CTlFactory::GetInstance().EnumerateTls(transportInfoList);
       for (auto& transportInfo : transportInfoList)
@@ -149,11 +184,12 @@ public:
                    << "\n\t\t" << transportInfo.GetVersion()
                    << std::endl;
       }
-
+#endif
       Pylon::DeviceInfoList_t deviceInfoList;
       auto countDevices = Pylon::CTlFactory::GetInstance().EnumerateDevices(deviceInfoList);
       for (auto& deviceInfo : deviceInfoList)
       {
+#if 0
          std::cout << "Device:"
             << "\n\t\t" << deviceInfo.GetFriendlyName()
             << "\n\t\t" << deviceInfo.GetFullName()
@@ -197,6 +233,7 @@ public:
             << "\n\t\t" << deviceInfo.GetDeviceSpecificString()
             << "\n\t\t" << deviceInfo.GetPortSpecificString()
             << std::endl;
+#endif
          _dataStreams.emplace_back(std::make_unique<DataStream::Impl>(Pylon::CTlFactory::GetInstance().CreateDevice(deviceInfo)));
       }
       return _dataStreams;
@@ -206,7 +243,11 @@ private:
    std::vector<DataStream> _dataStreams;
 };
 
-BaslerCamera::~BaslerCamera() = default;
+BaslerCamera::~BaslerCamera()
+{
+    std::cout << "BaslerCamera::~BaslerCamera" << std::endl;
+}
+
 BaslerCamera::BaslerCamera(BaslerCamera&&) noexcept = default;
 BaslerCamera& BaslerCamera::operator=(BaslerCamera&&) noexcept = default;
 
@@ -215,114 +256,66 @@ BaslerCamera::BaslerCamera()
 {
 }
 
-auto BaslerCamera::GetAvailableCameras() -> std::vector<BaslerCamera::DataStream>&
+auto BaslerCamera::GetAvailableCameras() -> std::vector<DataStream>&
 {
    return _pImpl->GetAvailableCameras();
 }
 
-BaslerCamera::DataStream::~DataStream() = default;
-BaslerCamera::DataStream::DataStream(BaslerCamera::DataStream&&) noexcept = default;
-BaslerCamera::DataStream& BaslerCamera::DataStream::operator=(BaslerCamera::DataStream&&) noexcept = default;
+DataStream::~DataStream() = default;
+DataStream::DataStream(DataStream&&) noexcept = default;
+DataStream& DataStream::operator=(DataStream&&) noexcept = default;
 
-BaslerCamera::DataStream::DataStream(std::unique_ptr<Impl>&& pImpl)
+DataStream::DataStream(std::unique_ptr<Impl>&& pImpl)
    : _pImpl{std::move(pImpl)}
 {
 }
 
-void BaslerCamera::DataStream::StartCamera()
+void DataStream::StartCamera()
 {
    _pImpl->StartCamera();
 }
 
-void BaslerCamera::DataStream::StopCamera()
+void DataStream::StopCamera()
 {
    _pImpl->StopCamera();
 }
 
-bool BaslerCamera::DataStream::GetFrame(cv::Mat& frame)
+bool DataStream::GetFrame(cv::Mat& frame)
 {
    return _pImpl->GetFrame(frame);
 }
 
-void BaslerCamera::DataStream::SetExposureTime(uint64_t exposureTime)
+void DataStream::SetExposureTime(uint64_t exposureTime)
 {
    _pImpl->SetExposureTime(exposureTime);
 }
 
-void BaslerCamera::DataStream::SetGain(uint32_t gain)
+void DataStream::SetGain(uint32_t gain)
 {
    _pImpl->SetGain(gain);
 }
 
-auto BaslerCamera::DataStream::GetVendor() -> std::string
+auto DataStream::GetVendor() -> std::string
 {
     return _pImpl->GetVendor();
 }
 
-auto BaslerCamera::DataStream::GetSerialNumber() -> std::string
+auto DataStream::GetSerialNumber() -> std::string
 {
     return _pImpl->GetSerialNumber();
 }
 
-auto BaslerCamera::DataStream::GetDeviceTemperature() -> float
+auto DataStream::GetDeviceTemperature() -> float
 {
     return _pImpl->GetDeviceTemperature();
 }
 
-#if 0
-class BaslerCamera::Impl {
-public:
-  Impl()
-    : _instantCamera{CreateCameraInstance()}
-  {
-    std::cout << "Using device " << _instantCamera.GetDeviceInfo().GetModelName() << std::endl;
+auto basler::DataStream::GetGain() -> uint32_t
+{
+    return _pImpl->GetGain();
+}
 
-    // The parameter MaxNumBuffer can be used to control the count of buffers
-    // allocated for grabbing. The default value of this parameter is 10.
-    _instantCamera.MaxNumBuffer = 5;
-
-    // Start the grabbing of c_countOfImagesToGrab images.
-    // The camera device is parameterized with a default configuration which
-    // sets up free-running continuous acquisition.
-    _instantCamera.StartGrabbing(100);
-
-    // This smart pointer will receive the grab result data.
-    Pylon::CGrabResultPtr ptrGrabResult;
-
-    // Camera.StopGrabbing() is called automatically by the RetrieveResult() method
-    // when c_countOfImagesToGrab images have been retrieved.
-    while (_instantCamera.IsGrabbing())
-    {
-      // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-      _instantCamera.RetrieveResult(5000, ptrGrabResult, Pylon::TimeoutHandling_ThrowException);
-
-      // Image grabbed successfully?
-      if (ptrGrabResult->GrabSucceeded())
-      {
-        // Access the image data.
-        std::cout << "SizeX: " << ptrGrabResult->GetWidth() << std::endl;
-        std::cout << "SizeY: " << ptrGrabResult->GetHeight() << std::endl;
-        const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
-        auto pixelType = ptrGrabResult->GetPixelType();
-        std::cout << pixelType << std::endl;
-        std::cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << std::endl;
-        cv::Mat const frame = cv::Mat((int)ptrGrabResult->GetHeight(), (int)ptrGrabResult->GetWidth(), CV_8UC3, (void*)pImageBuffer);
-        cv::imshow("", frame);
-        cv::waitKey(1);
-      }
-      else
-      {
-        std::cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << std::endl;
-      }
-    }
-  }
-
-  ~Impl()
-  {
-    Pylon::PylonTerminate();
-  }
-
-private:
-  Pylon::CInstantCamera _instantCamera;
-};
-#endif
+auto basler::DataStream::GetExposureTime() -> uint64_t
+{
+    return _pImpl->GetExposureTime();
+}
