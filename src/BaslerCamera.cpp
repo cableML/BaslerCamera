@@ -61,7 +61,7 @@ public:
          auto pixelType = ptrGrabResult->GetPixelType();
          std::cout << "pixelType: " << pixelType << std::endl;
          std::cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << std::endl;
-         frame = cv::Mat((int)ptrGrabResult->GetHeight(), (int)ptrGrabResult->GetWidth(), CV_8UC3, (void*)pImageBuffer);
+         frame = cv::Mat((int)ptrGrabResult->GetHeight(), (int)ptrGrabResult->GetWidth(), CV_8UC3, (void*)pImageBuffer).clone();
       }
       else
       {
